@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import api from "../../config/axios";
+import api from "../../config/api";
 
 import { Button } from "@/components/ui/button";
 import {

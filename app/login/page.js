@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import api from "../../config/axios";
+import api from "@/config/api";
+import { useAuth } from "@/context/AuthContext";
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,6 +13,18 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+
+  const { authToken, saveAuthToken } = useAuth();
+
+   // Cek jika sudah login saat komponen dimount
+    useEffect(() => {
+      if (authToken) {
+        console.log(" Anda berhasil logjn");
+        router.push('/admin');
+      }
+    }, [authToken, router]);
+
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -18,9 +32,9 @@ export default function LoginPage() {
 
     try {
       const { data } = await api.post('/auth/login', { email, password });
-      localStorage.setItem('token', data.token); // Simpan token di localStorage
+      saveAuthToken(data.token);
       setLoading(false);
-      router.push('/admin/dashboard');
+      router.push('/admin'); // Redirect on success
     } catch (error) {
       setLoading(false);
       if (error.response && error.response.status === 401) {
@@ -32,7 +46,6 @@ export default function LoginPage() {
       }
     }
   };
-
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
       <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
