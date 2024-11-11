@@ -15,7 +15,6 @@ export default function PostSidebar() {
         setError("Gagal memuat kategori.");
       }
     };
-
     fetchCategories();
   }, []);
 

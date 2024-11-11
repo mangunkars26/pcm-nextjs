@@ -1,54 +1,56 @@
-import {
-    Card,
-    CardHeader,
-    CardContent,
-    CardTitle,
-    CardDescription
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar, User } from "lucide-react";
+// components/PostDetail.js
+"use client";
 
-const PostDetail = ({ title, image, author, body, category, date }) => {
+import { useEffect, useState } from "react";
+import api from "@/config/api";
+
+export default function PostDetail({ slug }) {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        console.log("Slug berubah atau data ter-update:", slug, data);
+        const fetchPost = async () => {
+            setLoading(true);
+            try {
+                const response = await api.get(`/posts/${slug}`);
+                if (response.status === 200 && response.data?.data) {
+                    setData(response.data.data);  // Simpan data langsung dari API
+                } else {
+                    setError("Data tidak ditemukan.");
+                }
+            } catch (err) {
+                setError("Gagal mengambil data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (slug) {
+            fetchPost();
+        }
+    }, [slug]);
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error: {error}</p>;
+
     return (
-       <div>
-         <CardTitle className="text-4xl font-bold my-6">{title}</CardTitle>
-         
-         <Card className="shadow-lg rounded-lg overflow-hidden">
-            <CardHeader className="p-0">
+        <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
+            {data?.featured_image && (
                 <img
-                    src={image}
-                    alt={title}
-                    className="w-full h-96 object-cover"
+                    src={data.featured_image}
+                    alt={data.title}
+                    className="w-full h-96 object-cover rounded-lg"
                 />
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm text-gray-500 font-semibold uppercase tracking-wide">
-                        {category}
-                    </p>
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <Calendar className="w-5 h-5" />
-                        <span>{date}</span>
-                    </div>
-                </div>
-
-                <div className="flex items-center space-x-4 mb-6">
-                    <User className="w-5 h-5 text-gray-500" />
-                    <p className="text-sm text-gray-500">By {author}</p>
-                </div>
-                
-                <CardDescription className="text-gray-700 leading-relaxed text-lg">
-                    {body}
-                </CardDescription>
-
-                <div className="mt-6 flex space-x-4">
-                    <Button variant="primary">Share</Button>
-                    <Button variant="outline">Save</Button>
-                </div>
-            </CardContent>
-         </Card>
-       </div>
+            )}
+            <h1 className="text-4xl font-bold text-gray-800 mt-4">{data?.title}</h1>
+            <div className="text-sm text-gray-500 mt-2">
+                <p>By {data?.user?.name} on {new Date(data?.created_at).toLocaleDateString()}</p>
+                <p>Category: {data?.category?.name}</p>
+            </div>
+            <div className="mt-6 text-gray-700">
+                <p>{data?.body}</p>
+            </div>
+        </div>
     );
-};
-
-export default PostDetail;
+}

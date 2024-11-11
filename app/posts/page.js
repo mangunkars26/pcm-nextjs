@@ -12,11 +12,7 @@ const PostsPage = () => {
       <h1 className="text-3xl font-bold mb-6">Welcome to the Blog</h1>
 
       {/* Panggil komponen PostsList dengan props yang diinginkan */}
-      <PostsList
-        limit={6}
-        categories={["database"]}
-        showPagination={true}
-      />
+      <PostsList />
     </div>
   );
 };

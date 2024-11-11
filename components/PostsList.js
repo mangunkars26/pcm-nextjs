@@ -1,120 +1,82 @@
-"use client";
+// "use client";
 
-import { useEffect, useState } from "react";
-import api from '@/config/api';
-import LoadingDots from "./LoadingDots";
-import PostGrid from "./wrapper/PostGrid";
+import React, { useState } from 'react';
+import Pagination from './Pagination';
+import useFetch from '@/hooks/useFetch';
+import LoadingDots from './LoadingDots';
+import PostGrid from './wrapper/PostGrid';
 
-const PostsList = ({
-    limit=10,
-    categories=[],
-    showPagination=true,
-    onError=null,
-    onPostsFetched=null,
-}) => {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+export default function PostsList() {
+    const [search, setSearch] = useState('');
+    const [sortBy, setSortBy] = useState('created_at');
+    const [order, setOrder] = useState('desc');
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-
-    const fetchPosts = async (page) => {
-        console.log("Fetched Posts:", posts); // Debugging di PostsList
-
-        setLoading(true);
-        try {
-            // Construct category query if categories are provided
-            const categoryQuery = categories.length ? `&categories=${categories.join(",")}` : "";
     
-            // Make the API request
-            const response = await api.get(`/posts?page=${page}&limit=${limit}${categoryQuery}`);
-    
-            // Log the full response for debugging
-            console.log("Full API Response:", response.data);
-    
-            // Check if the fetch was successful
-            if (response.data.success) {
-                // Log the posts data for debugging
-                console.log("Fetched Posts Data:", response.data.data.data);
-    
-                // Set posts and total pages
-                setPosts(response.data.data.data || []);
-                setTotalPages(response.data.data.last_page || 1);
-            } else {
-                // Handle the case where the API responds with success: false
-                throw new Error(response.data.message || "Fetch failed with no specific message.");
-            }
-    
-            // Call the optional callback if provided
-            if (onPostsFetched) {
-                onPostsFetched(response.data.data.data);
-            }
-        } catch (err) {
-            // Enhanced error logging
-            console.error("Fetch error:", err);
-    
-            // Extract error message from the response or set a default message
-            const errorMessage = err.response?.data?.message || "Gagal fetch posts";
-            setError(errorMessage);
-        } finally {
-            // Ensure loading is set to false regardless of success or error
-            setLoading(false);
-        }
-    };
-    
-    
-
-    useEffect(() => {
-        fetchPosts(currentPage);
-        
-    }, [currentPage, categories, limit]);
-
-    const handlePreviousPage = () => {
-        if (currentPage > 1 ) {
-            setCurrentPage((prevPage) => prevPage - 1 );
-        }
+    const params = {
+        page: currentPage,
+        sort_by: sortBy,
+        order,
+        ...(search.trim() !== '' && { search }),
     };
 
-    const handleNextPage = () => {
-        if (currentPage < totalPages ) {
-            setCurrentPage((prevPage) => prevPage + 1);
-        }
-    };
+    console.log("Params:", params); // Cek params yang dikirim
+const { data, loading, error } = useFetch('/posts', params, [currentPage, search, sortBy, order]);
 
+    // Debugging logs
+    console.log("Loading:", loading);
+    console.log("Error:", error);
+    console.log("Data:", data);
+
+    // Check if data exists before mapping
+    const posts = data?.data?.map(post => ({
+        ...post,
+        authorName: post.user?.name,
+        categoryName: post.categories?.name,
+    })) || [];
+
+    const totalPages = data?.total_pages || 1;
+
+    const handlePageChange = (page) => setCurrentPage(page);
 
     return (
         <div className="container mx-auto p-4">
+            <div className="mb-4">
+                <input
+                    type="text"
+                    placeholder="Search posts..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="border p-2 rounded-lg mr-2"
+                />
+                <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="border p-2 rounded-lg mr-2"
+                >
+                    <option value="created_at">Date</option>
+                    <option value="title">Title</option>
+                </select>
+                <select
+                    value={order}
+                    onChange={(e) => setOrder(e.target.value)}
+                    className="border p-2 rounded-lg"
+                >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                </select>
+            </div>
             {loading ? (
                 <LoadingDots />
             ) : error ? (
-                <p className="text-red-500">{error}</p>
+                <p>Error: {error}</p>
             ) : (
-                <>
-                    {/* daftar posts */}
-                    <PostGrid posts={posts} />
-
-                        {showPagination && (
-                            <div className="flex justify-center mt-6">
-                                <button
-                                    onClick={handlePreviousPage}
-                                    disabled={currentPage === 1}
-                                    className="px-4 py-2 mx-2 bg-gray-300 rounded disabled:opacity-50"
-                                    >
-                                        Prev
-                                </button>
-                                <button
-                                    onClick={handleNextPage}
-                                    disabled={currentPage === totalPages}
-                                    className="px-4 pt-2 bg-gray-300 rounded disabled:opacity-50">
-                                    Next
-                                </button>
-
-                             </div>
-                        )}
-                </>
+                <PostGrid posts={data} />
             )}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+            />
         </div>
     );
 }
-
-export default PostsList;

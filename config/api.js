@@ -8,23 +8,23 @@ const api = axios.create({
     baseURL
 });
 
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-            console.log("Token add to req:", token);
-        } else {
-            console.log("Tiada token di localstorage");
-        }
-        return config;
-    },
-    (error) => {
-        console.error("request error:", error);
-        return Promise.reject(error);
-    }
+// api.interceptors.request.use(
+//     (config) => {
+//         const token = localStorage.getItem('authToken');
+//         if (token) {
+//             config.headers['Authorization'] = `Bearer ${token}`;
+//             console.log("Token add to req:", token);
+//         } else {
+//             console.log("Tiada token di localstorage");
+//         }
+//         return config;
+//     },
+//     (error) => {
+//         console.error("request error:", error);
+//         return Promise.reject(error);
+//     }
 
-);
+// );
 
 api.interceptors.response.use(
     (response) => {
